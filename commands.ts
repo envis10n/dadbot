@@ -1,4 +1,9 @@
-import { SlashCommandBuilder, CommandInteraction, Collection, Client } from "discord.js";
+import {
+    SlashCommandBuilder,
+    CommandInteraction,
+    Collection,
+    Client,
+} from "discord.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 
@@ -10,7 +15,9 @@ export interface ICommandDef {
 let didLoad = false;
 export const _COMMANDS: Collection<string, ICommandDef> = new Collection();
 
-export async function reloadCommands(): Promise<Collection<string, ICommandDef>> {
+export async function reloadCommands(): Promise<
+    Collection<string, ICommandDef>
+> {
     didLoad = false;
     return await commands();
 }
@@ -20,16 +27,31 @@ export async function commands(): Promise<Collection<string, ICommandDef>> {
     didLoad = true;
     // Load commands
     const folderPath = path.join(__dirname, "commands");
-    const commandPaths = (await fs.readdir(path.join("commands"), { recursive: true })).filter((f) => f.endsWith(".ts")).map((f) => path.join(folderPath, f));
+    const commandPaths = (
+        await fs.readdir(path.join("commands"), { recursive: true })
+    )
+        .filter((f) => f.endsWith(".ts"))
+        .map((f) => path.join(folderPath, f));
     for (const commandPath of commandPaths) {
         console.log(`Found command at ${commandPath}...`);
         const command: ICommandDef = (await import(commandPath)).default;
-        if ('data' in command && 'execute' in command) {
+        if ("data" in command && "execute" in command) {
             _COMMANDS.set(command.data.name, command);
             console.log(`${commandPath} loaded.`);
         } else {
-            console.log(`[WARNING] The command at ${commandPath} is missing a required "data" or "execute" property.`);
+            console.log(
+                `[WARNING] The command at ${commandPath} is missing a required "data" or "execute" property.`
+            );
         }
     }
     return _COMMANDS;
+}
+
+export async function commandList(): Promise<SlashCommandBuilder[]> {
+    const cmds = await commands();
+    const res: SlashCommandBuilder[] = [];
+    for (const cmd of cmds.values()) {
+        res.push(cmd.data);
+    }
+    return res;
 }
