@@ -14,6 +14,7 @@ const _STATEPATH: string = ((): string => {
 export interface DadState {
     cooldown: number;
     lastCall: number;
+    random: number;
 }
 
 let _DADSTATE: { [key: Snowflake]: DadState } = {};
@@ -22,37 +23,17 @@ function defaultDadState(): DadState {
     return {
         cooldown: 15 * 60 * 1000,
         lastCall: 0,
+        random: 0.4,
     };
 }
 
-async function saveState() {
+export async function saveState() {
     await fs.writeFile(_STATEPATH, JSON.stringify(_DADSTATE));
 }
 
-export function get_cooldown(guild: Snowflake): number {
+export function getState(guild: Snowflake): DadState {
     if (_DADSTATE[guild] == undefined) _DADSTATE[guild] = defaultDadState();
-    const gstate = _DADSTATE[guild];
-    return gstate.cooldown;
-}
-
-export async function set_cooldown(guild: Snowflake, v: number) {
-    if (_DADSTATE[guild] == undefined) _DADSTATE[guild] = defaultDadState();
-    const gstate = _DADSTATE[guild];
-    gstate.cooldown = v;
-    await saveState();
-}
-
-export function get_lastCall(guild: Snowflake): number {
-    if (_DADSTATE[guild] == undefined) _DADSTATE[guild] = defaultDadState();
-    const gstate = _DADSTATE[guild];
-    return gstate.lastCall;
-}
-
-export async function set_lastCall(guild: Snowflake, v: number) {
-    if (_DADSTATE[guild] == undefined) _DADSTATE[guild] = defaultDadState();
-    const gstate = _DADSTATE[guild];
-    gstate.lastCall = v;
-    await saveState();
+    return _DADSTATE[guild];
 }
 
 export async function joinGuild(guild: Snowflake) {

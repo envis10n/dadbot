@@ -1,14 +1,6 @@
-import {
-    REST,
-    Routes,
-    Client,
-    GatewayIntentBits,
-    ApplicationCommand,
-    Events,
-    type Snowflake,
-} from "discord.js";
-import { commandList, commands, reloadCommands } from "./commands";
-import { joinGuild, leaveGuild, loadState } from "./state";
+import { Client, GatewayIntentBits, Events } from "discord.js";
+import { commands } from "./commands";
+import { getState, joinGuild, leaveGuild, loadState, saveState } from "./state";
 
 const BOT_TOKEN: string | undefined = process.env["BOT_TOKEN"];
 const BOT_ID: string | undefined = process.env["BOT_ID"];
@@ -24,7 +16,11 @@ if (BOT_ID == undefined) {
 }
 
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+    ],
 });
 
 client.once(Events.ClientReady, async (client) => {
@@ -59,6 +55,23 @@ client.once(Events.ClientReady, async (client) => {
             }
         }
     });
+});
+
+client.on(Events.MessageCreate, async (message) => {
+    if (message.author.bot || message.guildId == null) return; // Ignore bots and DMs.
+    const msg = message.content.trim();
+    if (msg == "") return; // Ignore empty messages.
+    const DAD_REG = /\b(?:i am|i'm)\b(?<reply>[^.]*)(?:[.?!]|\n)?/i;
+    const res = DAD_REG.exec(msg);
+    if (res == null || res.groups == undefined) return; // Ignore non-matching or malformed matches.
+    const reply = res.groups["reply"].trim();
+    if (reply.length > 25) return; // Ignore long joke replies.
+    const state = getState(message.guildId);
+    if (state.lastCall + state.cooldown >= Date.now()) return; // Cooldown not reached yet.
+    if (Math.random() >= state.random) return; // Randomized chance for allowing the call.
+    await message.reply(`Hi ${reply}, I'm dad.`);
+    state.lastCall = Date.now();
+    await saveState();
 });
 
 client.on(Events.GuildCreate, async (guild) => {
