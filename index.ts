@@ -59,7 +59,8 @@ client.once(Events.ClientReady, async (client) => {
 
 client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot || message.guildId == null) return; // Ignore bots and DMs.
-    const msg = message.content.trim();
+    const msg = message.content.trim(); // Ignore mudae command lol
+    if (msg.startsWith("$")) return;
     if (msg == "") return; // Ignore empty messages.
     const DAD_REG = /\b(?:i am|i'm|im|imma)\b(?<reply>[^.]*)(?:[.?!]|\n)?/i;
     const res = DAD_REG.exec(msg);
@@ -69,7 +70,6 @@ client.on(Events.MessageCreate, async (message) => {
     const state = getState(message.guildId);
     if (state.lastCall + state.cooldown >= Date.now()) return; // Cooldown not reached yet.
     if (Math.random() >= state.random) return; // Randomized chance for allowing the call.
-    if (reply.startsWith("$")) return; // Ignore mudae command lol
     await message.reply(`Hi ${reply}, I'm dad.`);
     state.lastCall = Date.now();
     await saveState();
