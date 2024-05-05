@@ -61,7 +61,7 @@ client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot || message.guildId == null) return; // Ignore bots and DMs.
     const msg = message.content.trim();
     if (msg == "") return; // Ignore empty messages.
-    const DAD_REG = /\b(?:i am|i'm)\b(?<reply>[^.]*)(?:[.?!]|\n)?/i;
+    const DAD_REG = /\b(?:i am|i'm|im|imma)\b(?<reply>[^.]*)(?:[.?!]|\n)?/i;
     const res = DAD_REG.exec(msg);
     if (res == null || res.groups == undefined) return; // Ignore non-matching or malformed matches.
     const reply = res.groups["reply"].trim();
