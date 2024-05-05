@@ -69,6 +69,7 @@ client.on(Events.MessageCreate, async (message) => {
     const state = getState(message.guildId);
     if (state.lastCall + state.cooldown >= Date.now()) return; // Cooldown not reached yet.
     if (Math.random() >= state.random) return; // Randomized chance for allowing the call.
+    if (reply.startsWith("$")) return; // Ignore mudae command lol
     await message.reply(`Hi ${reply}, I'm dad.`);
     state.lastCall = Date.now();
     await saveState();
