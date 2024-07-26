@@ -1,7 +1,7 @@
 import type { ICommandDef } from "../../commands";
 import { CommandInteraction, PermissionFlagsBits } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
-import { getState, saveState } from "../../state";
+import { DadState } from "../../state";
 
 export default {
     data: new SlashCommandBuilder()
@@ -28,9 +28,10 @@ export default {
         }
         const raw = interaction.options.get("factor", true).value;
         if (typeof raw != "number") return;
-        const state = getState(guild);
+        const state = await DadState.get(guild);
+        if (state == null) return;
         state.random = raw;
-        await saveState();
+        await state.update();
         interaction.reply({
             content: `Random factor set to ${raw}.`,
             ephemeral: true,

@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits, Events } from "discord.js";
 import { commands } from "./commands";
-import { getState, joinGuild, leaveGuild, loadState, saveState } from "./state";
+import { DadState, joinGuild, leaveGuild } from "./state";
 
 const BOT_TOKEN: string | undefined = process.env["BOT_TOKEN"];
 const BOT_ID: string | undefined = process.env["BOT_ID"];
@@ -28,8 +28,6 @@ client.once(Events.ClientReady, async (client) => {
     console.log("Begin loading commands...");
     const cmds = await commands();
     console.log("Commands loaded.");
-    console.log("Loading state...");
-    await loadState();
     console.log("Done.");
     client.on(Events.InteractionCreate, async (interaction) => {
         if (!interaction.isChatInputCommand()) return;
@@ -62,17 +60,18 @@ client.on(Events.MessageCreate, async (message) => {
     const msg = message.content.trim(); // Ignore mudae command lol
     if (msg.startsWith("$")) return;
     if (msg == "") return; // Ignore empty messages.
-    const DAD_REG = /\b(?:i am|i'm|im|imma)\b(?<reply>[^.]*)(?:[.?!]|\n)?/i;
+    const DAD_REG = /\b(?:i am|i'm|im|imma|ima)\b(?<reply>[^.]*)(?:[.?!]|\n)?/i;
     const res = DAD_REG.exec(msg);
     if (res == null || res.groups == undefined) return; // Ignore non-matching or malformed matches.
     const reply = res.groups["reply"].trim();
     if (reply.length > 25) return; // Ignore long joke replies.
-    const state = getState(message.guildId);
+    const state = await DadState.get(message.guildId);
+    if (state == null) return;
     if (state.lastCall + state.cooldown >= Date.now()) return; // Cooldown not reached yet.
     if (Math.random() >= state.random) return; // Randomized chance for allowing the call.
     await message.reply(`Hi ${reply}, I'm dad.`);
     state.lastCall = Date.now();
-    await saveState();
+    await state.update();
 });
 
 client.on(Events.GuildCreate, async (guild) => {
