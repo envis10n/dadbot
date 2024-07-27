@@ -1,19 +1,7 @@
 import type { Snowflake } from "discord.js";
-import * as fs from "fs/promises";
-import * as path from "path";
-import _db, { NAME } from "./db";
-import type { DatabaseScope, MaybeDocument } from "nano";
+import _db, { NAME, type MaybeDocument } from "./db";
 
-const db = _db.use<DadOptions>(NAME);
-
-const _STATEPATH: string = ((): string => {
-    const p =
-        process.env["STATE_PATH"] == undefined
-            ? "state.json"
-            : process.env["STATE_PATH"];
-    if (path.isAbsolute(p)) return p;
-    return path.resolve(process.cwd(), p);
-})();
+const db = _db.database<DadOptions>(NAME);
 
 export interface DadOptions extends MaybeDocument {
     cooldown: number;
@@ -46,8 +34,8 @@ export class DadState implements DadOptions {
             d._id = guild;
             const res = await db.insert(d);
             return new DadState(
-                res.id,
-                res.rev,
+                res._id,
+                res._rev,
                 d.cooldown,
                 d.lastCall,
                 d.random
@@ -56,7 +44,7 @@ export class DadState implements DadOptions {
     }
     public async update(): Promise<void> {
         const res = await db.insert(this);
-        this._rev = res.rev;
+        this._rev = res._rev;
     }
     public async destroy(): Promise<void> {
         await db.destroy(this._id, this._rev);
