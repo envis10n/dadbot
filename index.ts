@@ -69,9 +69,13 @@ client.on(Events.MessageCreate, async (message) => {
     if (state == null) return;
     if (state.lastCall + state.cooldown >= Date.now()) return; // Cooldown not reached yet.
     if (Math.random() >= state.random) return; // Randomized chance for allowing the call.
-    await message.reply(`Hi ${reply}, I'm dad.`);
-    state.lastCall = Date.now();
-    await state.update();
+    try {
+        await message.reply(`Hi ${reply}, I'm dad.`);
+        state.lastCall = Date.now();
+        await state.update();
+    } catch (e) {
+        console.error("[REPLY ERROR]", e);
+    }
 });
 
 client.on(Events.GuildCreate, async (guild) => {
